@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080d22"><meta name="description" content="MessageU — chat with friends, family, and groups.">
+<link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/styles.css"><title>MessageU — Stay connected</title>
+</head>
+<body>
+<div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+<main class="app">
+  <section class="auth-screen" id="authScreen">
+    <div class="auth-brand"><div class="logo">✦</div><div><b>MessageU</b><span>Stay connected, beautifully.</span></div></div>
+    <div class="auth-card glass">
+      <div class="auth-orb">✧</div><h1 id="authTitle">Your people.<br><em>Your space.</em></h1>
+      <p class="sub" id="authSub">Private conversations, family groups, and everyday moments.</p>
+      <form id="authForm">
+        <div id="displayNameWrap" class="field hidden"><label for="displayName">Your name</label><input id="displayName" maxlength="50" autocomplete="name" placeholder="How should we call you?"></div>
+        <div class="field"><label for="username">Username</label><div class="input-shell"><span>@</span><input id="username" required minlength="3" maxlength="24" pattern="[A-Za-z0-9_]+" autocomplete="username" placeholder="yourname"></div></div>
+        <div class="field"><label for="password">Password</label><input id="password" type="password" required minlength="8" maxlength="128" autocomplete="current-password" placeholder="At least 8 characters"></div>
+        <button class="primary wide" id="authSubmit">Sign in <span>↗</span></button>
+      </form>
+      <div class="auth-error hidden" id="authError"></div>
+      <p class="auth-switch"><span id="switchLabel">New to MessageU?</span> <button id="switchAuth" type="button">Create account</button></p>
+    </div>
+    <div class="auth-foot"><span class="pulse-dot"></span> Built for the people who matter <span>✧</span></div>
+  </section>
+
+  <section class="messenger hidden" id="messenger">
+    <aside class="rail">
+      <div class="logo">✦</div><button class="rail-btn active" data-view="chats" title="Chats">▤</button><button class="rail-btn" data-view="groups" title="Groups">♧</button><button class="rail-btn" data-view="profile" title="Profile">◉</button>
+      <div class="rail-bottom"><button class="rail-btn" id="logoutBtn" title="Sign out">↪</button></div>
+    </aside>
+    <aside class="inbox">
+      <header class="inbox-head"><div><div class="eyebrow">YOUR SPACE</div><h2 id="listTitle">Messages<span class="spark">✦</span></h2></div><button class="round-btn" id="newChatBtn" title="New chat">＋</button></header>
+      <div class="search"><span>⌕</span><input id="search" placeholder="Search conversations…" aria-label="Search conversations"></div>
+      <div class="chips"><button class="chip active" data-filter="all">All</button><button class="chip" data-filter="unread">Unread</button><button class="chip" data-filter="groups">Groups</button></div>
+      <div class="chat-list" id="chatList"><div class="loading">Loading your conversations…</div></div>
+      <div class="inbox-user"><div class="avatar me-avatar" id="meAvatar">Y</div><div class="user-meta"><b id="meName">Your profile</b><span id="meHandle">@username</span></div><span class="live-pill">LIVE</span></div>
+    </aside>
+    <section class="conversation" id="conversation">
+      <div class="welcome" id="welcome"><div class="welcome-art"><div class="art-ring"></div><div class="art-symbol">✦</div><span class="float f1">♡</span><span class="float f2">✧</span><span class="float f3">☻</span></div><div class="eyebrow">A LITTLE CLOSER, EVERY DAY</div><h1>Good conversations<br><em>change everything.</em></h1><p>Pick a chat or start a new one.<br>Your people are just a message away.</p><button class="primary" id="welcomeNew">Start a conversation <span>↗</span></button></div>
+      <div class="chat-panel hidden" id="chatPanel">
+        <header class="conversation-head"><button class="mobile-back" id="mobileBack">‹</button><div class="avatar" id="activeAvatar">M</div><div class="conversation-person"><b id="activeName">Conversation</b><span id="activeSubtitle">MessageU chat</span></div><div class="head-actions"><button class="round-btn" id="detailsBtn" title="Conversation details">ⓘ</button></div></header>
+        <div class="messages" id="messages"><div class="loading">Loading messages…</div></div>
+        <div class="typing-note hidden" id="typingNote">You’re connected to MessageU <span>✦</span></div>
+        <form class="composer" id="composer"><button class="emoji-btn" type="button" id="emojiBtn" title="Insert emoji">☺</button><textarea id="messageInput" rows="1" maxlength="4000" placeholder="Write something kind…" aria-label="Message"></textarea><button class="send-btn" type="submit" aria-label="Send message">➤</button><div class="emoji-pop hidden" id="emojiPop"><button type="button">😀</button><button type="button">😂</button><button type="button">🥹</button><button type="button">😍</button><button type="button">❤️</button><button type="button">🙏</button><button type="button">🔥</button><button type="button">🎉</button><button type="button">👍</button><button type="button">✨</button><button type="button">🤍</button><button type="button">👋</button></div></form>
+      </div>
+      <section class="side-view hidden" id="sideView"></section>
+    </section>
+  </section>
+</main>
+<dialog id="newChatDialog" class="modal"><form id="newChatForm"><div class="modal-head"><div><div class="eyebrow">MAKE A CONNECTION</div><h2 id="newChatTitle">New conversation</h2></div><button class="close" type="button" data-close="newChatDialog">×</button></div><div class="field"><label for="chatKind">Conversation type</label><select id="chatKind"><option value="direct">One-to-one chat</option><option value="group">Group conversation</option></select></div><div class="field hidden" id="groupNameWrap"><label for="groupName">Group name</label><input id="groupName" maxlength="80" placeholder="The weekend crew"></div><div class="field"><label for="chatUsernames" id="chatUsersLabel">Friend's username</label><input id="chatUsernames" required placeholder="e.g. maya_23"></div><p class="hint" id="newChatHint">Enter the exact username of the person you want to chat with.</p><div class="modal-error hidden" id="newChatError"></div><button class="primary wide" type="submit">Create conversation <span>↗</span></button></form></dialog>
+<dialog id="detailsDialog" class="modal"><div class="modal-head"><div><div class="eyebrow">YOUR CONVERSATION</div><h2>Chat details</h2></div><button class="close" type="button" data-close="detailsDialog">×</button></div><div id="detailsBody"></div></dialog>
+<div class="toast hidden" id="toast" role="status"></div>
+<script src="/socket.io/socket.io.js"></script><script src="/app.js"></script>
+</body></html>
