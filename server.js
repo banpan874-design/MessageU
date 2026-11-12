@@ -134,7 +134,7 @@ app.get("/api/users/search", auth, wrap(async (req, res) => {
 
 app.get("/api/chats", auth, wrap(async (req, res) => {
   const r = await pool.query(`
-    SELECT c.id,c.title,c.is_group,c.created_at,
+    SELECT c.id,c.title,c.is_group,c.created_at,c.created_by,
       (SELECT json_build_object('id',u.id,'username',u.username,'displayName',u.display_name,'avatarColor',u.avatar_color)
        FROM chat_members cm2 JOIN users u ON u.id=cm2.user_id
        WHERE cm2.chat_id=c.id AND u.id<>$1 ORDER BY u.username LIMIT 1) AS other_user,
@@ -146,7 +146,7 @@ app.get("/api/chats", auth, wrap(async (req, res) => {
     ORDER BY COALESCE((SELECT MAX(created_at) FROM messages WHERE chat_id=c.id),c.created_at) DESC
   `, [req.user.id]);
   res.json({ chats: r.rows.map(c => ({
-    id: String(c.id), title: c.title, isGroup: c.is_group, createdAt: c.created_at,
+    id: String(c.id), title: c.title, isGroup: c.is_group, createdAt: c.created_at, isCreator: String(c.created_by) === req.user.id,
     otherUser: c.other_user ? {...c.other_user, id:String(c.other_user.id)} : null,
     lastMessage: c.last_message ? {...c.last_message, id:String(c.last_message.id), senderId:c.last_message.senderId ? String(c.last_message.senderId) : null} : null,
     memberCount: Number(c.member_count)
@@ -196,6 +196,23 @@ app.post("/api/chats/group", auth, wrap(async (req, res) => {
   } catch (e) { await client.query("ROLLBACK"); throw e; } finally { client.release(); }
 }));
 
+app.post("/api/chats/:id/members", auth, wrap(async (req, res) => {
+  const usernames = [...new Set((Array.isArray(req.body?.usernames) ? req.body.usernames : []).map(x => String(x).trim().toLowerCase()).filter(Boolean))];
+  if (usernames.length < 1 || usernames.length > 30) return res.status(400).json({ error: "Add between 1 and 30 usernames." });
+  const chat = await pool.query("SELECT is_group,created_by FROM chats WHERE id=$1", [req.params.id]);
+  if (!chat.rowCount) return res.status(404).json({ error: "Group not found." });
+  if (!chat.rows[0].is_group) return res.status(400).json({ error: "Members can only be added to groups." });
+  if (String(chat.rows[0].created_by) !== req.user.id) return res.status(403).json({ error: "Only the group creator can add members." });
+  const found = await pool.query("SELECT id,username FROM users WHERE username=ANY($1::text[])", [usernames]);
+  const missing = usernames.filter(name => !found.rows.some(user => user.username === name));
+  if (missing.length) return res.status(400).json({ error: "Usernames not found: " + missing.join(", ") });
+  let added = 0;
+  for (const user of found.rows) {
+    const result = await pool.query("INSERT INTO chat_members(chat_id,user_id) VALUES($1,$2) ON CONFLICT(chat_id,user_id) DO NOTHING", [req.params.id, user.id]);
+    added += result.rowCount;
+  }
+  res.json({ added });
+}));
 app.get("/api/chats/:id/messages", auth, wrap(async (req, res) => {
   const membership = await pool.query("SELECT 1 FROM chat_members WHERE chat_id=$1 AND user_id=$2", [req.params.id, req.user.id]);
   if (!membership.rowCount) return res.status(404).json({ error: "Conversation not found." });
