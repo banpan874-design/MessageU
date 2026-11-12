@@ -50,7 +50,18 @@ $("#welcomeNew").addEventListener("click",()=>$("#newChatBtn").click());
 $("#chatKind").addEventListener("change",updateChatKind);
 function updateChatKind(){const group=$("#chatKind").value==="group";$("#groupNameWrap").classList.toggle("hidden",!group);$("#groupName").required=group;$("#chatUsersLabel").textContent=group?"Other members' usernames":"Friend's username";$("#chatUsernames").placeholder=group?"maya_23, daniel_7":"e.g. maya_23";$("#newChatHint").textContent=group?"Enter usernames separated by commas. All members must already have accounts.":"Enter the exact username of the person you want to chat with.";}
 $("#newChatForm").addEventListener("submit",async e=>{e.preventDefault();const group=$("#chatKind").value==="group";const users=$("#chatUsernames").value.split(",").map(x=>x.trim().replace(/^@/,"").toLowerCase()).filter(Boolean);const body=group?{title:$("#groupName").value.trim(),usernames:users}:{username:users[0]};if(!group&&users.length!==1){$("#newChatError").textContent="Enter one username.";$("#newChatError").classList.remove("hidden");return;}try{const r=await api(group?"/api/chats/group":"/api/chats/direct",{method:"POST",body:JSON.stringify(body)});$("#newChatDialog").close();await loadChats();await openChat(r.id);toast(group?"Group created.":"Conversation ready.");}catch(err){$("#newChatError").textContent=err.message;$("#newChatError").classList.remove("hidden");}});
-$("#detailsBtn").addEventListener("click",()=>{const c=state.chats.find(x=>x.id===state.activeId);if(!c)return;$("#detailsBody").innerHTML=`<div class="details-line"><b>${esc(chatName(c))}</b>${c.isGroup?"Group conversation":"Direct conversation"}</div><div class="details-line"><b>Members</b>${c.memberCount||2} participants</div><div class="details-line"><b>Message history</b>Latest 100 messages are loaded when opening a conversation.</div><div class="details-line"><b>Privacy note</b>Messages are stored on the service database. This app does not yet provide end-to-end encryption.</div>`;$("#detailsDialog").showModal();});
+$("#detailsBtn").addEventListener("click",()=>{const c=state.chats.find(x=>x.id===state.activeId);if(!c)return;$("#detailsBody").innerHTML=`<div class="details-line"><b>${esc(chatName(c))}</b>${c.isGroup?"Group conversation":"Direct conversation"}</div><div class="details-line"><b>Members</b>${c.memberCount||2} participants</div><div class="details-line"><b>Message history</b>Latest 100 messages are loaded when opening a conversation.</div><div class="details-line"><b>Privacy note</b>Messages are stored on the service database. This app does not yet provide end-to-end encryption.</div>`;$("#detailsDialog").showModal();if(c.isGroup&&c.isCreator){const b=document.createElement("button");b.className="primary wide";b.type="button";b.textContent="Add members ↗";b.addEventListener("click",()=>addGroupMembers(c));$("#detailsBody").append(b);}});
+async function addGroupMembers(chat){
+ const raw=prompt("Enter usernames to add, separated by commas:");
+ if(raw===null)return;
+ const usernames=[...new Set(raw.split(",").map(x=>x.trim().replace(/^@/,"").toLowerCase()).filter(Boolean))];
+ if(!usernames.length){toast("Enter at least one username.");return;}
+ try{
+  const result=await api("/api/chats/"+encodeURIComponent(chat.id)+"/members",{method:"POST",body:JSON.stringify({usernames})});
+  $("#detailsDialog").close();await loadChats();await openChat(chat.id);
+  toast(result.added?result.added+" member(s) added.":"Those users are already in the group.");
+ }catch(error){toast(error.message);}
+}
 $("#mobileBack").addEventListener("click",()=>{$("#messenger").classList.remove("mobile-chat");});
 $("#search").addEventListener("input",renderChats);
 $$(".chip").forEach(b=>b.addEventListener("click",()=>{$$(".chip").forEach(x=>x.classList.toggle("active",x===b));state.filter=b.dataset.filter;renderChats();}));
